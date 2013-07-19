@@ -43,7 +43,7 @@ def pdf2raw(bretz_text):
 
 if __name__ == "__main__":
     f = sys.argv[1]
-    raw = bretz2text(f)
+    raw = pdf2raw(f)
     
     o = os.path.join(os.path.dirname(f), "Cleaned " + os.path.basename(f))
     with open(o, 'wb') as output_file:
