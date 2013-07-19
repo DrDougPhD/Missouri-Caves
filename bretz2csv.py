@@ -23,43 +23,77 @@ def parse_cave_details(details):
     #  QUAD_MAP = (Not s|S)hown on QUAD Quadrangle map
     #  QUAD = WORD+
     #  DESCRIPTION = WORD+
-    aliquotQuadrantID = Literal("NE") | Literal("SE") | Literal("SW") | Literal("NW")
+    aliquotQuadrantID = Literal("NE") |\
+                        Literal("SE") |\
+                        Literal("SW") |\
+                        Literal("NW")
     aliquotQuadrantString = aliquotQuadrantID + Suppress("1/4")
     aliquotHalfString = oneOf("N E S W") + Suppress("1/2")
-    aliquotPart = Group(ZeroOrMore(aliquotQuadrantString | aliquotHalfString)).setResultsName("aliquot").setParseAction(lambda kwd: " ".join(kwd[0]))
+    aliquotPart = Group(ZeroOrMore(aliquotQuadrantString | aliquotHalfString))\
+                  .setResultsName("aliquot")\
+                  .setParseAction(lambda kwd: " ".join(kwd[0]))
 
     sectionToken = Suppress(oneOf("S s") + Literal("ec") + Optional("."))
     sectionNumber = Word(nums)
-    section = Group(sectionToken + sectionNumber + ZeroOrMore(Suppress("or") + sectionNumber)).setResultsName("section")
+    section = Group(
+      sectionToken \
+      + sectionNumber \
+      + ZeroOrMore(Suppress("or") + sectionNumber)
+    ).setResultsName("section")
 
     afterEndOfCaveName = aliquotHalfString | aliquotQuadrantString | sectionToken
-    caveName = Group(OneOrMore(~afterEndOfCaveName + Word(printables))).setResultsName('name').setParseAction(lambda name: " ".join(name[0]))
+    caveName = Group(OneOrMore(~afterEndOfCaveName + Word(printables)))\
+               .setResultsName('name')\
+               .setParseAction(lambda name: " ".join(name[0]))
 
     townshipDirection = oneOf("N S").setResultsName("direction")
     townshipNumber = Word(nums).setResultsName("number")
-    township = Suppress("T.") + Group(townshipNumber + townshipDirection).setResultsName("township") + Suppress('.')
+    township = Suppress("T.") \
+             + Group(townshipNumber + townshipDirection).setResultsName("township")\
+             + Suppress('.')
 
     rangeDirection = oneOf("E W").setResultsName("direction")
     rangeNumber = Word(nums).setResultsName("number")
-    range_info = Suppress("R.") + Group(rangeNumber + rangeDirection).setResultsName("range") + Suppress('.')
+    range_info = Suppress("R.") \
+               + Group(rangeNumber + rangeDirection).setResultsName("range")\
+               + Suppress('.')
 
     countyKeyword = Literal("County")
-    countyName = Group(OneOrMore(~countyKeyword + Word(alphas+"-'."))).setResultsName("county").setParseAction(lambda c: " ".join(c[0]))
+    countyName = Group(OneOrMore(~countyKeyword + Word(alphas+"-'.")))\
+                 .setResultsName("county")\
+                 .setParseAction(lambda c: " ".join(c[0]))
     county = countyName + Suppress("County")
 
-    notShownOnQuad = (Literal("Not") + Suppress("s")).setParseAction(lambda x: False)
+    notShownOnQuad = (Literal("Not") + Suppress("s"))\
+                     .setParseAction(lambda x: False)
     shownOnQuad = Literal("S").setParseAction(lambda x: True)
     onKeyword = Literal("on")
-    mapAlias = Group(OneOrMore(~onKeyword + Word(printables))).setParseAction(lambda alias: " ".join(alias[0])).setResultsName("alias")
+    mapAlias = Group(OneOrMore(~onKeyword + Word(printables)))\
+               .setParseAction(lambda alias: " ".join(alias[0]))\
+               .setResultsName("alias")
     quadrangleStatus = (shownOnQuad | notShownOnQuad).setResultsName("is_on_map")\
-                     + Suppress("hown") + Optional(Suppress('as') + mapAlias) + Suppress(onKeyword)
+                     + Suppress("hown") \
+                     + Optional(Suppress('as') + mapAlias)\
+                     + Suppress(onKeyword)
     quadrangleKeyword = Literal("Quadrangle") + Literal("map")
-    quadrangleName = Group(OneOrMore(~quadrangleKeyword + Word(alphas+"-'."))).setResultsName("name").setParseAction(lambda name: " ".join(name[0]))
-    quadrangle = Group(quadrangleStatus + quadrangleName).setResultsName("quad") + Suppress(quadrangleKeyword)
+    quadrangleName = Group(OneOrMore(~quadrangleKeyword + Word(alphas+"-'.")))\
+                     .setResultsName("name")\
+                     .setParseAction(lambda name: " ".join(name[0]))
+    quadrangle = Group(quadrangleStatus + quadrangleName).setResultsName("quad") \
+               + Suppress(quadrangleKeyword)
 
-    description = Group(ZeroOrMore(Word(alphanums + printables))).setResultsName("description").setParseAction(lambda desc: " ".join(desc[0]))
+    description = Group(ZeroOrMore(Word(alphanums + printables)))\
+                  .setResultsName("description")\
+                  .setParseAction(lambda desc: " ".join(desc[0]))
 
-    location = caveName + aliquotPart + section + Suppress(',') + township + Suppress(',') + range_info + Suppress(',') + county + quadrangle + description
+    location = caveName \
+             + aliquotPart \
+             + section + Suppress(',') \
+             + township + Suppress(',') \
+             + range_info + Suppress(',')\
+             + county \
+             + quadrangle \
+             + description
 
     return location.parseString(details)
 
