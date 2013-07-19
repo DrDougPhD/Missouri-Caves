@@ -8,11 +8,11 @@ def parse_cave_details(details):
     ##########################################################################
     # Define the Bretz Grammar.
     # Sample cave description:
-    # SE1/4 NW1/4 sec. 16, T. 37 N., R. 10 W., Pulaski County Not shown on Waynesville Quadrangle map The mouth of this cave ...
-    # S1/2 sec. 15, T. 36 N., R. 12 W., Pulaski County Not shown on Waynesville Quadrangle map There are two large caves...
-    # Sec. 15 or 22, T. 36 N., R. 13 W., Pulaski County Not shown on Richland Quadrangle map This cave is near Ozark...
+    # Boring Caverns SE1/4 NW1/4 sec. 16, T. 37 N., R. 10 W., Pulaski County Not shown on Waynesville Quadrangle map The mouth of this cave ...\n
+    # Another Cave S1/2 sec. 15, T. 36 N., R. 12 W., Pulaski County Not shown on Waynesville Quadrangle map There are two large caves...\n
+    # Something Bridge Sec. 15 or 22, T. 36 N., R. 13 W., Pulaski County Not shown on Richland Quadrangle map This cave is near Ozark...\n
     #
-    #  CAVE ::= [ALIQUOT_PART] SECTION, TOWNSHIP, RANGE, COUNTY QUAD_MAP DESCRIPTION
+    #  CAVE ::= CAVE_NAME [ALIQUOT_PART] SECTION, TOWNSHIP, RANGE, COUNTY QUAD_MAP DESCRIPTION
     #  ALIQUOT_PART ::= (((NE|SE|SW|NW)1/4)|((N|E|S|W)1/2))*
     #  SECTION ::= (S|s)ec. num+
     #  TOWNSHIP ::= T. num+ TOWNSHIP_DIR.
@@ -31,6 +31,9 @@ def parse_cave_details(details):
     sectionToken = Suppress(oneOf("S s") + Literal("ec") + Optional("."))
     sectionNumber = Word(nums)
     section = Group(sectionToken + sectionNumber + ZeroOrMore(Suppress("or") + sectionNumber)).setResultsName("section")
+
+    afterEndOfCaveName = aliquotHalfString | aliquotQuadrantString | sectionToken
+    caveName = Group(OneOrMore(~afterEndOfCaveName + Word(printables))).setResultsName('name').setParseAction(lambda name: " ".join(name[0]))
 
     townshipDirection = oneOf("N S").setResultsName("direction")
     townshipNumber = Word(nums).setResultsName("number")
@@ -56,7 +59,7 @@ def parse_cave_details(details):
 
     description = Group(ZeroOrMore(Word(alphanums + printables))).setResultsName("description").setParseAction(lambda desc: " ".join(desc[0]))
 
-    location = aliquotPart + section + Suppress(',') + township + Suppress(',') + range_info + Suppress(',') + county + quadrangle + description
+    location = caveName + aliquotPart + section + Suppress(',') + township + Suppress(',') + range_info + Suppress(',') + county + quadrangle + description
 
     return location.parseString(details)
 
@@ -71,26 +74,15 @@ if __name__ == "__main__":
     with open(filepath) as f:
         raw_text = f.read()
 
-    raw_caves = raw_text.split("=")
+    raw_caves = raw_text.split("\n")
     caves = []
     for raw_cave_text in raw_caves:
+        raw_cave_text = raw_cave_text.strip()
         if raw_cave_text:
-            split_lines = raw_cave_text.split('\n')
-            if len(split_lines) != 3:
-                print("ERROR: Text format incorrect.")
-                print("Please insure the text is in the following format:")
-                print("=Cave 1 name")
-                print("Cave 1 details")
-                print("=Cave 2 name")
-                print("Cave 2 details")
-                print("...")
-
-            cave_name = split_lines[0].strip()
-            raw_cave_details = split_lines[1].strip()
             try:
-                cave = parse_cave_details(raw_cave_details)
+                cave = parse_cave_details(raw_cave_text)
                 caves.append({
-                    'Cave name': cave_name,
+                    'Cave name': cave.name,
                     'Alias': cave.quad.alias,
                     'On map': cave.quad.is_on_map,
                     'Quad': cave.quad.name,
@@ -106,13 +98,13 @@ if __name__ == "__main__":
                     'Section': cave.section[0],
                     'Section Division': "".join(cave.aliquot),
                     'Township Duplicate': 0,
-                    'Description': raw_cave_details,
+                    'Description': raw_cave_text,
                 })
 
             except:
                 print("="*80)
-                print("ERROR: unexpected format for {0}".format(cave_name))
-                print(raw_cave_details)
+                print("ERROR: unexpected format for {0}".format(cave.name))
+                print(raw_cave_text)
                 import traceback
                 print(traceback.format_exc())
                 print("\t" + "\n\t".join([str(x) for x in sys.exc_info()]))
@@ -120,8 +112,8 @@ if __name__ == "__main__":
             else:
                 sections = " or ".join(cave.section)
                 #print("="*80)
-                #print("{1} := {0.aliquot} Sect. {2}, T. {0.township.number} {0.township.direction}., R. {0.range.number} {0.range.direction}., in {0.county} County on the {0.quad.name} quad map.".format(cave, cave_name, sections))
-                #print("   Marked on map as {0}".format(cave.quad.alias if cave.quad.alias else cave_name) if cave.quad.is_on_map else "   Not on map")
+                #print("{1} := {0.aliquot} Sect. {2}, T. {0.township.number} {0.township.direction}., R. {0.range.number} {0.range.direction}., in {0.county} County on the {0.quad.name} quad map.".format(cave, cave.name, sections))
+                #print("   Marked on map as {0}".format(cave.quad.alias if cave.quad.alias else cave.name) if cave.quad.is_on_map else "   Not on map")
 
     output_path = os.path.basename(filepath).split(".")[0] + ".csv"
     print("#"*80)
