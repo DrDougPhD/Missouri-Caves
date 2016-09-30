@@ -18,8 +18,8 @@ Although this project is open source, it's the input data that gives this projec
 
 ## How does this project convert from PLSS to GPS?
 
-There's actually a service called GeoCommunicator [7] that is provided by the Department of the Interior's Bureau of Land Management (BLM).
-I learned about this service while working for the U.S. Geological Survey (also under the Department of the Interior's wing) through some of my old timer colleagues.
+There's actually a service called the Township Geocoder [7], created by the Bureau of Land Management for their GeoCommunicator publication website.
+I learned about this service while working for the U.S. Geological Survey through some of my old timer colleagues.
 This service is a bit archaic, but it got the job done.
 
 ## Why did you create this?
@@ -43,5 +43,5 @@ Like most things I develop, laziness drives my motivation to automate.
 [4] http://www.stltoday.com/news/local/state-and-regional/bat-disease-forces-closure-of-missouri-caves/article_bb652913-c532-5d54-81de-7f43e9eb7ea4.html  
 [5] https://mostateparks.com/advisory/60398/missouri-cave-advisory  
 [6] https://lnt.org/  
-[7] http://www.geocommunicator.gov/GeoComm/  
+[7] http://www.geocommunicator.gov/GeoComm/lsis_home/townshipdecoder/index.htm  
 [8] https://en.wikipedia.org/wiki/Quadrangle_(geography)  
